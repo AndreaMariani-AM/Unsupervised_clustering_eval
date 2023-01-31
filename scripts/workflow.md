@@ -1,6 +1,6 @@
 # Workflow
 
-This R markdown file contains a general workflow with some explanations behind the set of functions created in the [metrics.R]() file.  
+This R markdown file contains a general workflow with some explanations behind the set of functions created in the [metrics.R](https://github.com/AndreaMariani-AM/Unsupervised_clustering_eval/blob/main/scripts/metrics.R) file.  
 The main idea was to make the steps before clustering more rigorous, and assign some values to the clustering params that could help me out
 in deciding which visual representation is the one that can retain the highest information of my dataset.  
 
