@@ -1,7 +1,9 @@
 # INTRODUCTION
 
-This repo contains a script implemented in R that can be used to evaluate the performance of clustering when supervised labels are not available (unsupervised clustering).  
+This repo contains some functins implemented in R that can be used to evaluate the performance of clustering when supervised labels are not available (unsupervised clustering).  
 A classical example in biology is clustering of cells in a scRNA-seq experiments.  
+A set of Hyperparameters is decided a priori and then is evaluated through the metrics reported here.  
+This will hopefully retrieve a visual representation of cluster that has some rigrous to it.
 
 
 ## METRICS
