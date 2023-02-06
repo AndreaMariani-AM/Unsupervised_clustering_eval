@@ -11,31 +11,125 @@
 ###                       Function for the Metrics 						###
 ###---------------------------------------------------------------------###
 
-# Retrieve PCA cell embeddings used later to as a space for clustering
-count_matrix <- seurat@reductions$pca@cell.embeddings
-# Retrieve resolutions, mine starts from 0, hence the 2:lenght(resolutions) when computing
-# the scores
-resolutions_to_evaluate <- names(seurat@meta.data) %>% str_subset(pattern = "^SCT")
+# Function to evaluate different hyperparameters
+test_clust <- function(seurat_object, number_neighbors, distance_metrics, algorithm_clustering, min_distance_nn,
+                       n_pcs, cluster_resolution) {
+
+  # Packages
+  require(Seurat)
+  library(ggplot2)
+  library(patchwork)
+  library(cluster)
+  library(fpc)
+  library(clusterSim)
+  library(tidyverse)
 
 
-# Silhouette Score
+  # At this point onw should have already done QC, Normalization with SCT and PCA
 
-Silhouette_score <- map(resolutions_to_evaluate[2:length(resolutions_to_evaluate)], 
-                        ~ mean(cluster::silhouette(as.numeric(seurat@meta.data[[.x]]), dist(count_matrix))[,3])) %>%
-  set_names(resolutions_to_evaluate[2:length(resolutions_to_evaluate)])
+  # Load in a list of params
+  params_list <- list(num_neighbors        = number_neighbors,
+                      dist_metrics         = distance_metrics,
+                      algorithm_clustering = algorithm_clustering,
+                      min_distance         = min_distance_nn,
+                      cluster_resolution   = cluster_resolution)
+
+  # cluster resolution is omitted in the loops cause it'll  be the primary output
+  # of each UMAP
+
+  for (i in names(params_list[-length(params_list)])) {
+    for(j in length(params_list$min_distance)) {
+
+
+  # RUN UMAP, Neighbors finding and Clustering
+  seurat <- RunUMAP(
+    seurat,
+    min.dist = paramms_list$min_distance[[j]],
+    n.neighbors = params_list$num_neighbors[[i]],
+    reduction.name = "UMAP",
+    reduction.key = "UMAP_",
+    dims = 1:n_pcs,
+    n.components = 2,
+    seed.use = 100
+  )
+
+  seurat <- FindNeighbors(seurat, dims = 1:n_pcs, k.param = params_list$num_neighbors[1])
+  seurat <- FindClusters(seurat, resolution = params_list$cluster_resolution[1])
+
+  # Perform UMAP with the first parameters
+
+
+  # Define count matrix and resolutions to evaluate
+
+  count_matrix <- seurat@reductions$pca@cell.embeddings
+  resolutions_to_evaluate <- names(seurat@meta.data) %>% str_subset(pattern = "^SCT")
+
+  # Silhouette Score
+
+Silhouette_scores_V2 <- map(resolutions_to_evaluate_v2[2:length(resolutions_to_evaluate_v2)], 
+                        ~ mean(cluster::silhouette(as.numeric(seurat_V2@meta.data[[.x]]), dist(count_matrix_V2))[,3])) %>%
+  set_names(resolutions_to_evaluate_v2[2:length(resolutions_to_evaluate_v2)])
 
 # Calinski Harabasz Index
 
-CH_index <- map(resolutions_to_evaluate[2:length(resolutions_to_evaluate)],
-                ~ fpc::calinhara(x = count_matrix, clustering = as.numeric(seurat@meta.data[[.x]]))) %>% 
-  set_names(resolutions_to_evaluate[2:length(resolutions_to_evaluate)])
+CH_index_V2 <- map(resolutions_to_evaluate_v2[2:length(resolutions_to_evaluate_v2)],
+                ~ fpc::calinhara(x = count_matrix_V2, clustering = as.numeric(seurat_V2@meta.data[[.x]]))) %>% 
+  set_names(resolutions_to_evaluate_v2[2:length(resolutions_to_evaluate_v2)])
 
 # Davies Bouldin Index
 
-DB_index <- map(resolutions_to_evaluate[2:length(resolutions_to_evaluate)],
-                ~ index.DB(x = count_matrix, cl = (as.numeric(seurat@meta.data[[.x]])))) %>% 
+DB_index_V2 <- map(resolutions_to_evaluate_v2[2:length(resolutions_to_evaluate_v2)],
+                ~ index.DB(x = count_matrix_V2, cl = (as.numeric(seurat_V2@meta.data[[.x]])))) %>% 
   map(pluck, 1) %>% 
-  set_names(resolutions_to_evaluate[2:length(resolutions_to_evaluate)])
+  set_names(resolutions_to_evaluate_v2[2:length(resolutions_to_evaluate_v2)])
+    }
+  }
+}
+
+
+
+###---------------------------------------------------------------------###
+###                      Best Candidates Function 						###
+###---------------------------------------------------------------------###
+
+
+top_candidates_metrics <- function(df_silhouette, df_CH, df_DB){
+
+  require(tidyr)
+  require(magrittr)
+  require(dplyr)
+  require(purrr)
+
+  #create a list of the DFs
+  df_list <- list(silhouette_score = df_silhouette,
+                  CH_index        = df_CH,
+                  DB_index        = df_DB)
+
+  # Join them together
+  temp <- df_list %>%
+    map(as_tibble) %>%
+    map(~ .x %>%
+          pivot_longer(everything())) %>%
+    imap(~ rename(.x, "{.y}" := value)) %>%
+    reduce(left_join)
+
+  #Extract the best resolutions by metric
+  silh_res <- temp %>% arrange(desc(silhouette_score)) %>%
+    select(name) %>% rename(silhouette_score = name)
+
+  CH_res <- temp %>% arrange(desc(CH_index)) %>%
+    select(name) %>% rename(CH_index = name)
+
+  DB_res <- temp %>% arrange(DB_index) %>%
+    select(name) %>% rename(DB_index = name)
+
+  # joining ordered resolutions
+  result <- data.frame(silh_res, CH_res, DB_res)
+
+  return(result)
+}
+
+
 
 ###---------------------------------------------------------------------###
 ###                         Plotting Function 						    ###

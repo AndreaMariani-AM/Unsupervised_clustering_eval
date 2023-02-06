@@ -5,19 +5,17 @@ The main idea was to make the steps before clustering more rigorous, and assign 
 in deciding which visual representation is the one that can retain the highest information of my dataset.  
 
 ## Steps
+Steps that needs to be performed:  
+1. Perform QC, normalization and PCA from Dani's scripts  
+2. Choose a certain Number of PCA (elbow method or others), then keep it fixed  
+3. Decide which hyperparameters need tuning
 
-1. Perform classical QC for single cell  
-2. Perform PCA  						
-3. Decide which hyperparameter needs tuning  
-4. Compute the Score/Indices for that hyperparameter  
-5. Inspect the plots and decides a value for the hyperparameter  
+## Hyperparameters
 
-## Decide which hyperparameter need tuning
-
-1. N. of PCs  
-2. N. of neighbors when constructing the graph  
-3. Distance Metric  
-4. Community detection algorithm  
+3. Number of Neighbors when constructing the graph (k.param)  
+4. Min dist neighbors  
+5. Distance Metrics for annoy(euclidean, cosine, manhattan, hamming)  
+6. Algorithm for finding clusters( OG Louvain, Louvain refinement, SLM, Leiden)  
 
 ## Pseudo code (for now)
 
@@ -28,7 +26,9 @@ perform_QC_steps
 
 hyperameter <- "value/char"
 
-compute_metrics <- function(x) {}
+test_clust <- function(x) {}
+
+top_candidates_metrics
 
 plot_metrics <- function(x) {}
 ```
