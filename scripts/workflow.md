@@ -19,7 +19,8 @@ Steps that needs to be performed:
 3. Distance Metrics for annoy(euclidean, cosine, manhattan, hamming)  
 4. Algorithm for finding clusters( OG Louvain, Louvain refinement, SLM, Leiden)  
 
-Hyperparametr `1` and `2` are going to be evaluated at the same time when performing UMAP. Param `3` is evaluated on the neighbors finding and lastly, param `4` is tested when performing clustering.
+Hyperparameters `1` and `2` are going to be evaluated at the same time when performing UMAP.  
+Param `3` is evaluated on the neighbors finding and lastly, param `4` is tested when performing clustering.
 
 ## Pseudo code (for now)
 
