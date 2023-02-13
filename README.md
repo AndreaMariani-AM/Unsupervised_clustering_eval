@@ -1,10 +1,19 @@
 # INTRODUCTION (UNDER DEVELOPMENT)
 
-This repo contains some functins implemented in R that can be used to evaluate the performance of clustering when supervised labels are not available (unsupervised clustering).  
+This repo contains some functions implemented in R that can be used to evaluate the performance of clustering when supervised labels are not available (unsupervised clustering).  
 A classical example in biology is clustering of cells in a scRNA-seq experiments.  
 A set of Hyperparameters is decided a priori and then is evaluated through the metrics reported here.  
-This will hopefully retrieve a visual representation of cluster that has some rigrous to it.
+This will hopefully retrieve optimal `values` for our clustering problem.
 
+## HYPERPARAMETERS
+
+Here a brief discussion on which hyperparameters i think needs evaluation and tuning.  
+I'll eventually add more, if i have reasons to believe others need to be included.  
+
+1. The Number of Neighbors that are used when constructing the graph
+2. Minimum distance between cells
+3. Distance Metrics used for computing neighbors
+4. Algorithm for community detection
 
 ## METRICS
 
