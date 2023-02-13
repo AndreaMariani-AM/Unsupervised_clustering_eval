@@ -8,83 +8,122 @@
 
 
 ###---------------------------------------------------------------------###
-###                       Function for the Metrics 						###
+###                       Function for the Metrics 						          ###
 ###---------------------------------------------------------------------###
 
 # Function to evaluate different hyperparameters
 test_clust <- function(seurat_object, number_neighbors, distance_metrics, algorithm_clustering, min_distance_nn,
                        n_pcs, cluster_resolution) {
-
+  
   # Packages
   require(Seurat)
-  library(ggplot2)
-  library(patchwork)
-  library(cluster)
-  library(fpc)
-  library(clusterSim)
-  library(tidyverse)
-
-
-  # At this point onw should have already done QC, Normalization with SCT and PCA
-
+  require(ggplot2)
+  require(patchwork)
+  require(cluster)
+  require(fpc)
+  require(clusterSim)
+  require(tidyverse)
+  require(glue)
+  
+  
+  # At this point one should have already done QC, Normalization with SCT and PCA
+  
+  # Create and empty list that stores the results. Each Hyperparameter will be an element
+  # of the list and each element will have another list as element
+  
+  res <- list()
+  
   # Load in a list of params
   params_list <- list(num_neighbors        = number_neighbors,
                       dist_metrics         = distance_metrics,
                       algorithm_clustering = algorithm_clustering,
                       min_distance         = min_distance_nn,
                       cluster_resolution   = cluster_resolution)
-
+  
   # cluster resolution is omitted in the loops cause it'll  be the primary output
   # of each UMAP
-
-  for (i in names(params_list[-length(params_list)])) {
-    for(j in length(params_list$min_distance)) {
-
-
-  # RUN UMAP, Neighbors finding and Clustering
-  seurat <- RunUMAP(
-    seurat,
-    min.dist = paramms_list$min_distance[[j]],
-    n.neighbors = params_list$num_neighbors[[i]],
-    reduction.name = "UMAP",
-    reduction.key = "UMAP_",
-    dims = 1:n_pcs,
-    n.components = 2,
-    seed.use = 100
-  )
-
-  seurat <- FindNeighbors(seurat, dims = 1:n_pcs, k.param = params_list$num_neighbors[1])
-  seurat <- FindClusters(seurat, resolution = params_list$cluster_resolution[1])
-
-  # Perform UMAP with the first parameters
-
-
-  # Define count matrix and resolutions to evaluate
-
-  count_matrix <- seurat@reductions$pca@cell.embeddings
-  resolutions_to_evaluate <- names(seurat@meta.data) %>% str_subset(pattern = "^SCT")
-
-  # Silhouette Score
-
-Silhouette_scores_V2 <- map(resolutions_to_evaluate_v2[2:length(resolutions_to_evaluate_v2)], 
-                        ~ mean(cluster::silhouette(as.numeric(seurat_V2@meta.data[[.x]]), dist(count_matrix_V2))[,3])) %>%
-  set_names(resolutions_to_evaluate_v2[2:length(resolutions_to_evaluate_v2)])
-
-# Calinski Harabasz Index
-
-CH_index_V2 <- map(resolutions_to_evaluate_v2[2:length(resolutions_to_evaluate_v2)],
-                ~ fpc::calinhara(x = count_matrix_V2, clustering = as.numeric(seurat_V2@meta.data[[.x]]))) %>% 
-  set_names(resolutions_to_evaluate_v2[2:length(resolutions_to_evaluate_v2)])
-
-# Davies Bouldin Index
-
-DB_index_V2 <- map(resolutions_to_evaluate_v2[2:length(resolutions_to_evaluate_v2)],
-                ~ index.DB(x = count_matrix_V2, cl = (as.numeric(seurat_V2@meta.data[[.x]])))) %>% 
-  map(pluck, 1) %>% 
-  set_names(resolutions_to_evaluate_v2[2:length(resolutions_to_evaluate_v2)])
+  
+  #for (i in names(params_list[-length(params_list)])) {
+  for(j in length(params_list$algorithm_clustering)) {
+    for(k in length(params_list$dist_metrics)) {
+      for(l in length(params_list$num_neighbors)) {
+        for(m in length(params_list$min_distance)) {
+          
+          # RUN UMAP, Neighbors finding and Clustering
+          seurat_tmp <- RunUMAP(
+            seurat_object,
+            min.dist = params_list$min_distance[[m]],
+            n.neighbors = params_list$num_neighbors[[l]],
+            reduction.name = "UMAP",
+            reduction.key = "UMAP_",
+            dims = 1:n_pcs,
+            n.components = 2,
+            seed.use = 100
+          )
+          
+          # Run Neighbors and Clustering
+          seurat_tmp <- FindNeighbors(seurat_tmp, 
+                                      dims = 1:n_pcs, 
+                                      k.param = params_list$num_neighbors[[l]],
+                                      annoy.metric = params_list$dist_metrics[[k]])
+          
+          seurat_tmp <- FindClusters(seurat_tmp, 
+                                     resolution = params_list$cluster_resolution,
+                                     algorithm = algorithm_clustering[[j]])
+          
+          
+          # Define count matrix and resolutions to evaluate
+          
+          count_matrix <- seurat_tmp@reductions$pca@cell.embeddings
+          resolutions_to_evaluate <- names(seurat_tmp@meta.data) %>% str_subset(pattern = "^SCT")
+          
+          # Silhouette Score
+          
+          Silhouette_scores <- map(resolutions_to_evaluate[2:length(resolutions_to_evaluate)], 
+                                   ~ mean(cluster::silhouette(as.numeric(seurat_tmp@meta.data[[.x]]), dist(count_matrix))[,3])) %>%
+            set_names(resolutions_to_evaluate[2:length(resolutions_to_evaluate)])
+          
+          # Calinski Harabasz Index
+          
+          CH_index <- map(resolutions_to_evaluate[2:length(resolutions_to_evaluate)],
+                          ~ fpc::calinhara(x = count_matrix, clustering = as.numeric(seurat_tmp@meta.data[[.x]]))) %>% 
+            set_names(resolutions_to_evaluate[2:length(resolutions_to_evaluate)])
+          
+          # Davies Bouldin Index
+          
+          DB_index <- map(resolutions_to_evaluate[2:length(resolutions_to_evaluate)],
+                          ~ index.DB(x = count_matrix, cl = (as.numeric(seurat_tmp@meta.data[[.x]])))) %>% 
+            map(pluck, 1) %>% 
+            set_names(resolutions_to_evaluate[2:length(resolutions_to_evaluate)])
+          
+          # Reset Seurat Object
+          
+          seurat_tmp <- NULL
+          
+          # Create a list that containes the three indexes
+          
+          tmp_indexes_df <- list(Silhouette_scores = Silhouette_scores,
+                                 CH_index = CH_index,
+                                 DB_index = DB_index)
+          
+          # Append the three metrics to a list
+          #tmp name
+          tmp_name <- glue::glue("algo", "_", j, "_",
+                                 "distMet", "_", k, "_",
+                                 "nn", "_", l, "_",
+                                 "minDist", "_", m)
+          
+          res[[tmp_name]] <- tmp_indexes_df
+        }
+      }
     }
   }
+  
+  return(res)
+  
 }
+#}
+
 
 
 
