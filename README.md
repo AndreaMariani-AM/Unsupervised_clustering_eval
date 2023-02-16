@@ -24,6 +24,6 @@ When clustering data, we should strive for clusters that are:
   - Non-overlapping  
 
 Three key metrics are:
-  - Silhoutte Score  $$\Large s(i) = \frac{b(i) - a(i)}{max(a(i),b(i))}$$
+  - Silhouette Score  $$\Large s(i) = \frac{b(i) - a(i)}{max(a(i),b(i))}$$
   - Calinski-Harabasz Index  $$\Large CH = \frac{Tr(B)}{Tr(W)} \cdot \frac{n - k}{k - 1}$$
   - Davies-Bouldin Index $$\Large DB = \frac{1}{k} \sum_{i =1}^{k} max_{i \not = j} Sim_{ij}$$ where $\Large Sim_{ij} = \frac{s_i + s_j}{d_{ij}}$
