@@ -27,3 +27,11 @@ Three key metrics are:
   - Silhouette Score  $$\Large s(i) = \frac{b(i) - a(i)}{max(a(i),b(i))}$$
   - Calinski-Harabasz Index  $$\Large CH = \frac{Tr(B)}{Tr(W)} \cdot \frac{n - k}{k - 1}$$
   - Davies-Bouldin Index $$\Large DB = \frac{1}{k} \sum_{i =1}^{k} max_{i \not = j} Sim_{ij}$$ where $\Large Sim_{ij} = \frac{s_i + s_j}{d_{ij}}$
+  
+  ## RUNNING TIME
+  
+As a small note, i've tested if the running time of that shitty (i mean *cute*) function can scale up at least decently. Turns out that my biggest fear, aka scaling exponentially, seems like not true. Though slow af, computing time doesn't seem to grow exponentially.
+
+<p align="center">
+  <img width="800" height="450" src="https://github.com/AndreaMariani-AM/Unsupervised_clustering_eval/tree/main/images/running_time.pdf">
+</p>
