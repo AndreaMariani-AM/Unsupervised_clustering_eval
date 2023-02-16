@@ -33,5 +33,5 @@ Three key metrics are:
 As a small note, i've tested if the running time of that shitty (i mean *cute*) function can scale up at least decently. Turns out that my biggest fear, aka scaling exponentially, seems like not true. Though slow af, computing time doesn't seem to grow exponentially.
 
 <p align="center">
-  <img width="800" height="450" src="https://github.com/AndreaMariani-AM/Unsupervised_clustering_eval/tree/main/images/running_time.jpeg">
+  <img width="200" height="250" src="https://github.com/AndreaMariani-AM/Unsupervised_clustering_eval/blob/main/images/running_time.jpeg">
 </p>
