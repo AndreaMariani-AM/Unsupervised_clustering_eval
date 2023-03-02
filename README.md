@@ -28,7 +28,7 @@ When clustering data, we should strive for clusters that are:
 Three key metrics are:
   - Silhouette Score  $$\Large s(i) = \frac{b(i) - a(i)}{max(a(i),b(i))}$$
   - Calinski-Harabasz Index  $$\Large CH = \frac{Tr(B)}{Tr(W)} \cdot \frac{n - k}{k - 1}$$
-  - Davies-Bouldin Index $$\Large DB = \frac{1}{k} \sum_{i =1}^{k} max_{i \not = j} Sim_{ij}$$ where $\Large Sim_{ij} = \frac{s_i + s_j}{d_{ij}}$
+  - Davies-Bouldin Index $$\Large DB = \frac{1}{k} \sum_{i =1}^{k} max_{i \not = j} Sim_{ij}$$ where $$\large Sim_{ij} = \frac{s_i + s_j}{d_{ij}}$$
   
   ## RUNNING TIME
   
@@ -37,5 +37,5 @@ A whole different story are the hyperparameters, for which i kinda know for sure
 
 
 <p align="center">
-  <img width="800" height="450" src="https://github.com/AndreaMariani-AM/Unsupervised_clustering_eval/tree/main/images/running_time.pdf">
+  <img width="900" height="750" src="https://github.com/AndreaMariani-AM/Unsupervised_clustering_eval/blob/main/images/running_time.jpeg">
 </p>
