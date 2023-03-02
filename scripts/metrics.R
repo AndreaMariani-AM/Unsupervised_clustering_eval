@@ -1,11 +1,13 @@
-# Functions to evaluate different hyperparameters
+###---------------------------------------------------------------------###
+###                     hyperparameters evaluation 						###
+###---------------------------------------------------------------------###
+
 
 test_clust <- function(seurat_object, algorithm_clustering, distance_metrics, number_neighbors, min_distance_nn,
                        n_pcs, cluster_resolution) {
   
   # Packages
   require(Seurat)
-  require(ggplot2)
   require(patchwork)
   require(cluster)
   require(fpc)
@@ -111,95 +113,104 @@ test_clust <- function(seurat_object, algorithm_clustering, distance_metrics, nu
   return(res)
   
   }
-#}
-
-
-
-###---------------------------------------------------------------------###
-###                      Best Candidates Function 						###
-###---------------------------------------------------------------------###
-
-
-top_candidates_metrics <- function(df_silhouette, df_CH, df_DB){
-  
-  require(tidyr)
-  require(magrittr)
-  require(dplyr)
-  require(purrr)
-  
-  #create a list of the DFs
-  df_list <- list(silhouette_score = df_silhouette,
-                  CH_index        = df_CH,
-                  DB_index        = df_DB)
-  
-  # Join them together
-  temp <- df_list %>%
-    map(as_tibble) %>%
-    map(~ .x %>%
-          pivot_longer(everything())) %>%
-    imap(~ rename(.x, "{.y}" := value)) %>%
-    reduce(left_join)
-  
-  #Extract the best resolutions by metric
-  silh_res <- temp %>% arrange(desc(silhouette_score)) %>%
-    select(name) %>% rename(silhouette_score = name)
-  
-  CH_res <- temp %>% arrange(desc(CH_index)) %>%
-    select(name) %>% rename(CH_index = name)
-  
-  DB_res <- temp %>% arrange(DB_index) %>%
-    select(name) %>% rename(DB_index = name)
-  
-  # joining ordered resolutions
-  result <- data.frame(silh_res, CH_res, DB_res)
-  
-  return(result)
-}
-
 
 
 ###---------------------------------------------------------------------###
 ###                         Plotting Function 						    ###
 ###---------------------------------------------------------------------###
 
-# hyperparameter <- "PCA Components"
-# 
-# pdf(here::here(OUTDIR, DOCNAME, "test_clustering.pdf"), width = 20, height = 8)
-# # Silhouette scores
-# Silhouette_scores %>% 
-#   as_tibble %>% 
-#   pivot_longer(everything()) %>% 
-#   ggplot(aes(x = name, y = value, group = 1)) +
-#   geom_line(col = "darkviolet", linewidth = 2) +
-#   theme_custom +
-#   theme(axis.text.x = element_text(angle = 65, hjust = 1),
-#         legend.position = "none") +
-#   labs(x = "Cluster Resolution", y = "Silhouette Score", title = glue("Silhouette score for {hyperparameter} hyperparameter")) |
-#   
-#   
-#   # CH Index
-#   
-#   CH_index %>% 
-#   as_tibble() %>% 
-#   pivot_longer(everything()) %>% 
-#   ggplot(aes(x = name, y = value, group = 1)) +
-#   geom_line(col = "darkviolet", linewidth = 2) +
-#   theme_custom +
-#   theme(axis.text.x = element_text(angle = 65, hjust = 1),
-#         legend.position = "none") +
-#   labs(x = "Cluster Resolution", y = "Calinski-Harabasz Index", title = glue("CH index for {hyperparameter} hyperparameter")) |
-#   
-#   
-#   # Db Index
-#   
-#   DB_index %>% 
-#   as_tibble() %>% 
-#   pivot_longer(everything()) %>% 
-#   ggplot(aes(x = name, y = value, group = 1)) +
-#   geom_line(col = "darkviolet", linewidth = 2) +
-#   theme_custom +
-#   theme(axis.text.x = element_text(angle = 65, hjust = 1),
-#         legend.position = "none") +
-#   labs(x = "Cluster Resolution", y = "Davies-Bouldin Index", title = glue("DB index for {hyperparameter} hyperparameter"))
-# 
-# dev.off()
+# This function takes in the output of test_clust and plots the metrics per combination
+
+plot_clusters <- function(metrics, outdir){
+  
+  # Packages
+  require(tidyverse)
+  require(glue)
+  
+  
+  #Set theme for later
+  theme_custom <- theme_bw(base_size = 16) +
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.background = element_rect(colour = "black"),
+          legend.key.size  = unit(0.4, units = "cm"),
+    ) +
+    theme(plot.title = element_text(hjust = 0.5)
+    ) +
+    theme(
+      axis.text = element_text(color = "black"),
+      axis.ticks = element_line(color = "black")
+    ) +
+    theme(
+      strip.text = element_text(colour = 'black'),
+      strip.background = element_rect(fill="white")
+    )
+  
+  ## Plotting function
+  
+  for (i in names(metrics)){
+    
+    plot <-   metrics[i] %>%
+      as.data.frame() %>% 
+      pivot_longer(everything()) %>% 
+      mutate(split_col = case_when(str_detect(name, "Silhouette") ~ "Silhouette",
+                                   str_detect(name, "CH") ~ "Calinski-Harabasz",
+                                   TRUE ~ "Davies-Bouldin")) %>% 
+      split(~ as_factor(.$split_col)) %>% 
+      #separate(name, c("metric", "index1", "index2"), sep = "_", remove = FALSE) %>% 
+      imap(~ ggplot(.x, 
+                    aes(x = name, y = value, group = 1)) +
+             geom_line(col = "darkviolet", linewidth = 2) +
+             geom_point() +
+             theme_custom +
+             theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+                   legend.position = "none") +
+             labs(x = "Cluster Resolution", y = .x$split_col, title = glue("Score/Index for   {.y}")))
+    
+    pdf(glue::glue(outdir,"/", i, "_", "plot.pdf"))
+    print(plot)
+    dev.off()
+    
+  }
+}
+
+###---------------------------------------------------------------------###
+###                      Best Candidates Function 						###
+###---------------------------------------------------------------------###
+
+
+# top_candidates_metrics <- function(df_silhouette, df_CH, df_DB){
+  
+#   require(tidyr)
+#   require(magrittr)
+#   require(dplyr)
+#   require(purrr)
+  
+#   #create a list of the DFs
+#   df_list <- list(silhouette_score = df_silhouette,
+#                   CH_index        = df_CH,
+#                   DB_index        = df_DB)
+  
+#   # Join them together
+#   temp <- df_list %>%
+#     map(as_tibble) %>%
+#     map(~ .x %>%
+#           pivot_longer(everything())) %>%
+#     imap(~ rename(.x, "{.y}" := value)) %>%
+#     reduce(left_join)
+  
+#   #Extract the best resolutions by metric
+#   silh_res <- temp %>% arrange(desc(silhouette_score)) %>%
+#     select(name) %>% rename(silhouette_score = name)
+  
+#   CH_res <- temp %>% arrange(desc(CH_index)) %>%
+#     select(name) %>% rename(CH_index = name)
+  
+#   DB_res <- temp %>% arrange(DB_index) %>%
+#     select(name) %>% rename(DB_index = name)
+  
+#   # joining ordered resolutions
+#   result <- data.frame(silh_res, CH_res, DB_res)
+  
+#   return(result)
+# }

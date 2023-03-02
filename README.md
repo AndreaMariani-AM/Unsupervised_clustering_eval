@@ -3,7 +3,9 @@
 This repo contains some functions implemented in R that can be used to evaluate the performance of clustering when supervised labels are not available (unsupervised clustering).  
 A classical example in biology is clustering of cells in a scRNA-seq experiments.  
 A set of Hyperparameters is decided a priori and then is evaluated through the metrics reported here.  
-This will hopefully retrieve optimal `values` for our clustering problem.
+This will hopefully retrieve optimal `values` for our clustering problem.  
+
+A brief workflow is reported here in the same repo
 
 ## HYPERPARAMETERS
 
@@ -30,7 +32,9 @@ Three key metrics are:
   
   ## RUNNING TIME
   
-As a small note, i've tested if the running time of that shitty (i mean *cute*) function can scale up at least decently. Turns out that my biggest fear, aka scaling exponentially, seems like not true. Though slow af, computing time doesn't seem to grow exponentially.
+As a small note, i've tested if running time of that shitty (i mean *cute*) function can scale up at least decently, when considering an increasingly higher number of cells. Turns out that my biggest fear, aka scaling exponentially, seems like not true. Though slow af, computing time doesn't seem to grow exponentially, at least for the number of cells.  
+A whole different story are the hyperparameters, for which i kinda know for sure it's gonna be exponentially if, let's say, one decide to use 2 insted of 1 Algorithm for community detection and so on. As a general rule of thumb, this should increase for each additional `value` an hyperparameter can have.
+
 
 <p align="center">
   <img width="800" height="450" src="https://github.com/AndreaMariani-AM/Unsupervised_clustering_eval/tree/main/images/running_time.pdf">
