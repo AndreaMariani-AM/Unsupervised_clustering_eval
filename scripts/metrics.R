@@ -4,10 +4,11 @@
 
 
 test_clust <- function(seurat_object, algorithm_clustering, distance_metrics, number_neighbors, min_distance_nn,
-                       n_pcs, cluster_resolution) {
+                       n_pcs, cluster_resolution, normalization) {
   
   # Packages
   require(Seurat)
+  require(ggplot2)
   require(patchwork)
   require(cluster)
   require(fpc)
@@ -66,24 +67,32 @@ test_clust <- function(seurat_object, algorithm_clustering, distance_metrics, nu
             # Define count matrix and resolutions to evaluate
             
             count_matrix <- seurat_tmp@reductions$pca@cell.embeddings
-            resolutions_to_evaluate <- names(seurat_tmp@meta.data) %>% str_subset(pattern = "^SCT")
+            
+            if (normalization == "SCT") {
+              resolutions_to_evaluate <- names(seurat_tmp@meta.data) %>% str_subset(pattern = "^SCT")
+            } else {
+              resolutions_to_evaluate <- names(seurat_tmp@meta.data) %>% str_subset(pattern = "^RNA")
+            }
             
             # Silhouette Score
             
             Silhouette_scores <- map(resolutions_to_evaluate[2:length(resolutions_to_evaluate)], 
-                                        ~ mean(cluster::silhouette(as.numeric(seurat_tmp@meta.data[[.x]]), dist(count_matrix))[,3])) %>%
+                                        ~ mean(cluster::silhouette(as.numeric(seurat_tmp@meta.data[[.x]]), 
+                                                                   dist(count_matrix))[,3])) %>%
               set_names(resolutions_to_evaluate[2:length(resolutions_to_evaluate)])
             
             # Calinski Harabasz Index
             
             CH_index <- map(resolutions_to_evaluate[2:length(resolutions_to_evaluate)],
-                               ~ fpc::calinhara(x = count_matrix, clustering = as.numeric(seurat_tmp@meta.data[[.x]]))) %>% 
+                               ~ fpc::calinhara(x = count_matrix, 
+                                                clustering = as.numeric(seurat_tmp@meta.data[[.x]]))) %>% 
               set_names(resolutions_to_evaluate[2:length(resolutions_to_evaluate)])
             
             # Davies Bouldin Index
             
             DB_index <- map(resolutions_to_evaluate[2:length(resolutions_to_evaluate)],
-                               ~ index.DB(x = count_matrix, cl = (as.numeric(seurat_tmp@meta.data[[.x]])))) %>% 
+                               ~ index.DB(x = count_matrix, 
+                                          cl = (as.numeric(seurat_tmp@meta.data[[.x]])))) %>% 
               map(pluck, 1) %>% 
               set_names(resolutions_to_evaluate[2:length(resolutions_to_evaluate)])
             
@@ -112,8 +121,7 @@ test_clust <- function(seurat_object, algorithm_clustering, distance_metrics, nu
   
   return(res)
   
-  }
-
+}
 
 ###---------------------------------------------------------------------###
 ###                         Plotting Function 						    ###
@@ -129,6 +137,7 @@ plot_clusters <- function(metrics, outdir){
   
   
   #Set theme for later
+  
   theme_custom <- theme_bw(base_size = 16) +
     theme(panel.grid.major = element_blank(), 
           panel.grid.minor = element_blank(),
@@ -165,9 +174,9 @@ plot_clusters <- function(metrics, outdir){
              theme_custom +
              theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
                    legend.position = "none") +
-             labs(x = "Cluster Resolution", y = .x$split_col, title = glue("Score/Index for   {.y}")))
+             labs(x = "Cluster Resolution", y = .x$split_col, title = glue("Score/Index for {.y}")))
     
-    pdf(glue::glue(outdir,"/", i, "_", "plot.pdf"))
+    pdf(glue::glue(outdir,"/", i, "_", "plot.pdf"), width = 12, height = 10)
     print(plot)
     dev.off()
     
